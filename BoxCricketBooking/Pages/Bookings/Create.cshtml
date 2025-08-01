@@ -1,0 +1,173 @@
+@page
+@model BoxCricketBooking.Pages.Bookings.CreateModel
+@{
+    ViewData["Title"] = "Book Cricket Match";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>Book Your Cricket Match
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="bookingForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Booking.CustomerName" class="form-label">Full Name *</label>
+                                    <input asp-for="Booking.CustomerName" class="form-control" required>
+                                    <span asp-validation-for="Booking.CustomerName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Booking.CustomerEmail" class="form-label">Email *</label>
+                                    <input asp-for="Booking.CustomerEmail" type="email" class="form-control" required>
+                                    <span asp-validation-for="Booking.CustomerEmail" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Booking.CustomerPhone" class="form-label">Phone Number *</label>
+                                    <input asp-for="Booking.CustomerPhone" class="form-control" required>
+                                    <span asp-validation-for="Booking.CustomerPhone" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Booking.NumberOfPlayers" class="form-label">Number of Players *</label>
+                                    <input asp-for="Booking.NumberOfPlayers" type="number" class="form-control" min="1" max="@Model.SelectedBoxCricket?.MaxPlayers" required>
+                                    <span asp-validation-for="Booking.NumberOfPlayers" class="text-danger"></span>
+                                    <small class="text-muted">Maximum: @Model.SelectedBoxCricket?.MaxPlayers players</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Booking.BookingDate" class="form-label">Booking Date *</label>
+                                    <input asp-for="Booking.BookingDate" type="date" class="form-control" required min="@DateTime.Today.ToString("yyyy-MM-dd")">
+                                    <span asp-validation-for="Booking.BookingDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Booking.StartTime" class="form-label">Start Time *</label>
+                                    <input asp-for="Booking.StartTime" type="time" class="form-control" required>
+                                    <span asp-validation-for="Booking.StartTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Booking.EndTime" class="form-label">End Time *</label>
+                                    <input asp-for="Booking.EndTime" type="time" class="form-control" required>
+                                    <span asp-validation-for="Booking.EndTime" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Duration (Hours)</label>
+                                    <input type="text" id="duration" class="form-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Booking.SpecialRequirements" class="form-label">Special Requirements</label>
+                            <textarea asp-for="Booking.SpecialRequirements" class="form-control" rows="3" placeholder="Any special requests or requirements..."></textarea>
+                            <span asp-validation-for="Booking.SpecialRequirements" class="text-danger"></span>
+                        </div>
+
+                        @if (Model.SelectedBoxCricket != null)
+                        {
+                            <div class="alert alert-info">
+                                <h5>Selected Cricket Box: @Model.SelectedBoxCricket.Name</h5>
+                                <p class="mb-2">Price per hour: ₹@Model.SelectedBoxCricket.PricePerHour</p>
+                                <p class="mb-0">Location: @Model.SelectedBoxCricket.Location</p>
+                            </div>
+                        }
+
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Booking Summary</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Duration:</strong> <span id="summaryDuration">-</span></p>
+                                        <p class="mb-1"><strong>Rate per hour:</strong> ₹<span id="summaryRate">@Model.SelectedBoxCricket?.PricePerHour</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Total Amount:</strong></p>
+                                        <h4 class="text-primary mb-0">₹<span id="summaryTotal">0</span></h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/BoxCrickets" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Boxes
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-credit-card me-2"></i>Proceed to Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startTimeInput = document.querySelector('input[name="Booking.StartTime"]');
+            const endTimeInput = document.querySelector('input[name="Booking.EndTime"]');
+            const durationInput = document.getElementById('duration');
+            const summaryDuration = document.getElementById('summaryDuration');
+            const summaryTotal = document.getElementById('summaryTotal');
+            const summaryRate = document.getElementById('summaryRate');
+
+            function calculateDuration() {
+                if (startTimeInput.value && endTimeInput.value) {
+                    const startTime = new Date(`2000-01-01T${startTimeInput.value}`);
+                    const endTime = new Date(`2000-01-01T${endTimeInput.value}`);
+                    
+                    if (endTime <= startTime) {
+                        endTime.setDate(endTime.getDate() + 1);
+                    }
+                    
+                    const diffMs = endTime - startTime;
+                    const diffHours = diffMs / (1000 * 60 * 60);
+                    
+                    if (diffHours > 0) {
+                        durationInput.value = diffHours.toFixed(1) + ' hours';
+                        summaryDuration.textContent = diffHours.toFixed(1) + ' hours';
+                        
+                        const rate = parseFloat(summaryRate.textContent) || 0;
+                        const total = (diffHours * rate).toFixed(2);
+                        summaryTotal.textContent = total;
+                    } else {
+                        durationInput.value = '';
+                        summaryDuration.textContent = '-';
+                        summaryTotal.textContent = '0';
+                    }
+                }
+            }
+
+            startTimeInput.addEventListener('change', calculateDuration);
+            endTimeInput.addEventListener('change', calculateDuration);
+        });
+    </script>
+}

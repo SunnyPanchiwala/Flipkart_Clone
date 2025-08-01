@@ -1,0 +1,193 @@
+@page
+@model BoxCricketBooking.Pages.Admin.BookingsModel
+@{
+    ViewData["Title"] = "Admin - Bookings";
+}
+
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-list me-2"></i>All Bookings
+            </h1>
+            <p class="lead text-muted">Manage and view all cricket match bookings</p>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-calendar me-2"></i>Booking Management
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Bookings.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Customer</th>
+                                <th>Box</th>
+                                <th>Date & Time</th>
+                                <th>Players</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var booking in Model.Bookings)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-secondary">#@booking.Id</span>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>@booking.CustomerName</strong><br>
+                                            <small class="text-muted">@booking.CustomerEmail</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>@booking.BoxCricket?.Name</strong><br>
+                                            <small class="text-muted">@booking.BoxCricket?.Location</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>@booking.BookingDate.ToString("MMM dd, yyyy")</strong><br>
+                                            <small class="text-muted">@booking.StartTime.ToString("HH:mm") - @booking.EndTime.ToString("HH:mm")</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">@booking.NumberOfPlayers</span>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">₹@booking.TotalAmount.ToString("N2")</strong>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var statusClass = booking.Status switch
+                                            {
+                                                BookingStatus.Confirmed => "bg-success",
+                                                BookingStatus.Pending => "bg-warning",
+                                                BookingStatus.Cancelled => "bg-danger",
+                                                BookingStatus.Completed => "bg-info",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @statusClass">@booking.Status</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" data-bs-target="#bookingModal@(booking.Id)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            @if (booking.Status == BookingStatus.Pending)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-success" 
+                                                        onclick="confirmBooking(@booking.Id)">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="cancelBooking(@booking.Id)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h4>No bookings found</h4>
+                    <p class="text-muted">There are no bookings in the system yet.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Booking Detail Modals -->
+@foreach (var booking in Model.Bookings)
+{
+    <div class="modal fade" id="bookingModal@(booking.Id)" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Booking Details #@booking.Id</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Customer Information</h6>
+                            <p><strong>Name:</strong> @booking.CustomerName</p>
+                            <p><strong>Email:</strong> @booking.CustomerEmail</p>
+                            <p><strong>Phone:</strong> @booking.CustomerPhone</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Booking Information</h6>
+                            <p><strong>Date:</strong> @booking.BookingDate.ToString("dddd, MMMM dd, yyyy")</p>
+                            <p><strong>Time:</strong> @booking.StartTime.ToString("HH:mm") - @booking.EndTime.ToString("HH:mm")</p>
+                            <p><strong>Players:</strong> @booking.NumberOfPlayers</p>
+                            <p><strong>Amount:</strong> ₹@booking.TotalAmount.ToString("N2")</p>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(booking.SpecialRequirements))
+                    {
+                        <hr>
+                        <h6>Special Requirements</h6>
+                        <p>@booking.SpecialRequirements</p>
+                    }
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Cricket Box Details</h6>
+                            <p><strong>Box:</strong> @booking.BoxCricket?.Name</p>
+                            <p><strong>Location:</strong> @booking.BoxCricket?.Location</p>
+                            <p><strong>Price per hour:</strong> ₹@booking.BoxCricket?.PricePerHour</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Payment Information</h6>
+                            <p><strong>Status:</strong> <span class="badge @(booking.Status == BookingStatus.Confirmed ? "bg-success" : "bg-warning")">@booking.Status</span></p>
+                            <p><strong>Payment ID:</strong> @(booking.StripePaymentIntentId ?? "N/A")</p>
+                            <p><strong>Created:</strong> @booking.CreatedAt.ToString("MMM dd, yyyy HH:mm")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function confirmBooking(bookingId) {
+            if (confirm('Are you sure you want to confirm this booking?')) {
+                // Add AJAX call to confirm booking
+                console.log('Confirming booking:', bookingId);
+            }
+        }
+
+        function cancelBooking(bookingId) {
+            if (confirm('Are you sure you want to cancel this booking?')) {
+                // Add AJAX call to cancel booking
+                console.log('Cancelling booking:', bookingId);
+            }
+        }
+    </script>
+}

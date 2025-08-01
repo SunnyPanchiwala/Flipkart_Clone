@@ -1,0 +1,152 @@
+@page
+@model BoxCricketBooking.Pages.Bookings.PaymentModel
+@{
+    ViewData["Title"] = "Payment";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-credit-card me-2"></i>Complete Your Payment
+                    </h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.Booking != null)
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5>Booking Details</h5>
+                                <p><strong>Customer:</strong> @Model.Booking.CustomerName</p>
+                                <p><strong>Date:</strong> @Model.Booking.BookingDate.ToString("dddd, MMMM dd, yyyy")</p>
+                                <p><strong>Time:</strong> @Model.Booking.StartTime.ToString("HH:mm") - @Model.Booking.EndTime.ToString("HH:mm")</p>
+                                <p><strong>Players:</strong> @Model.Booking.NumberOfPlayers</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Payment Summary</h5>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Amount:</span>
+                                            <span class="fw-bold">₹@Model.Booking.TotalAmount.ToString("N2")</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="h5 mb-0">Total:</span>
+                                            <span class="h5 mb-0 text-primary">₹@Model.Booking.TotalAmount.ToString("N2")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="payment-form">
+                            <div class="mb-3">
+                                <label for="card-element" class="form-label">Credit or Debit Card</label>
+                                <div id="card-element" class="form-control">
+                                    <!-- Stripe Elements will create input elements here -->
+                                </div>
+                                <div id="card-errors" class="text-danger mt-2" role="alert"></div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/Bookings/Create?boxId=@Model.Booking.BoxCricketId" class="btn btn-secondary me-md-2">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </a>
+                                <button type="submit" class="btn btn-success" id="submit-button">
+                                    <i class="fas fa-lock me-2"></i>Pay ₹@Model.Booking.TotalAmount.ToString("N2")
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <h4>Booking Not Found</h4>
+                            <p class="text-muted">The booking you're looking for doesn't exist or has been cancelled.</p>
+                            <a href="/BoxCrickets" class="btn btn-primary">
+                                <i class="fas fa-home me-2"></i>Go to Home
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        // Create a Stripe client
+        const stripe = Stripe('@Configuration["Stripe:PublishableKey"]');
+        const elements = stripe.elements();
+
+        // Create an instance of the card Element
+        const card = elements.create('card', {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': {
+                        color: '#aab7c4',
+                    },
+                },
+                invalid: {
+                    color: '#9e2146',
+                },
+            },
+        });
+
+        // Add an instance of the card Element into the `card-element` <div>
+        card.mount('#card-element');
+
+        // Handle form submission
+        const form = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-button');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+
+            const { paymentIntent, error } = await stripe.confirmCardPayment('@Model.Booking?.StripePaymentIntentId', {
+                payment_method: {
+                    card: card,
+                    billing_details: {
+                        name: '@Model.Booking?.CustomerName',
+                        email: '@Model.Booking?.CustomerEmail',
+                    },
+                }
+            });
+
+            if (error) {
+                // Show error to your customer
+                const errorElement = document.getElementById('card-errors');
+                errorElement.textContent = error.message;
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-lock me-2"></i>Pay ₹@Model.Booking?.TotalAmount.ToString("N2")';
+            } else {
+                // The payment has been processed!
+                if (paymentIntent.status === 'succeeded') {
+                    // Redirect to success page
+                    window.location.href = '/Bookings/Success?id=@Model.Booking?.Id';
+                }
+            }
+        });
+
+        // Handle real-time validation errors from the card Element
+        card.addEventListener('change', ({ error }) => {
+            const displayError = document.getElementById('card-errors');
+            if (error) {
+                displayError.textContent = error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+    </script>
+}
